@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ping Times Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Ping Times Chart</h1>
+    <label for="host">Host:</label>
+    <input type="text" id="host" value="8.8.8.8">
+    <button onclick="togglePingHost()">Start</button>
+    <canvas id="pingChart" width="400" height="200"></canvas>
+
+    <script>
+        const pingData = {
+            labels: [],
+            datasets: [{
+                label: 'Ping Times',
+                data: [],
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 2
+            }]
+        };
+        const pingConfig = {
+            type: 'line',
+            data: pingData,
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        };
+        const pingChart = new Chart(document.getElementById('pingChart'), pingConfig);
+
+        let pingInterval;
+        let isPinging = false;
+
+        async function pingHost() {
+            const host = document.getElementById('host').value;
+            try {
+                const response = await $.getJSON(`/ping/${host}`);
+                if (response.success) {
+                    const time = response.time;
+                    pingData.labels.push(new Date().toLocaleTimeString());
+                    pingData.datasets[0].data.push(time);
+                    pingChart.update();
+                } else {
+                    alert(`Error: ${response.error}`);
+                }
+            } catch (error) {
+                alert(`Error: ${error}`);
+            }
+        }
+
+        function togglePingHost() {
+            const button = document.querySelector("button");
+            if (isPinging) {
+                clearInterval(pingInterval);
+                isPinging = false;
+                button.textContent = "Start";
+            } else {
+                pingInterval = setInterval(pingHost, 1000);
+                isPinging = true;
+                button.textContent = "Stop";
+            }
+        }
+    </script>
+</body>
+</html>
+
